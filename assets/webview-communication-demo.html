@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebView通信测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    button {
+      background-color: #007AFF;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin: 10px 0;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    #messages {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f0f0f0;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .message {
+      padding: 8px;
+      margin: 5px 0;
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>WebView通信测试</h2>
+    <p>这是在WebView中加载的外部HTML页面</p>
+    
+    <button id="sendButton">向React Native发送消息</button>
+    
+    <div>
+      <h3>收到的消息:</h3>
+      <div id="messages"></div>
+    </div>
+  </div>
+
+  <script>
+    // 显示消息的函数
+    function addMessage(content) {
+      const messagesDiv = document.getElementById('messages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message';
+      messageDiv.textContent = content;
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // 向React Native发送消息
+    document.getElementById('sendButton').addEventListener('click', function() {
+      const message = {
+        type: 'greeting',
+        content: 'Hello from WebView!',
+        timestamp: new Date().toISOString()
+      };
+      
+      // 发送消息给React Native
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify(message));
+        addMessage('已发送: ' + JSON.stringify(message));
+      } else {
+        addMessage('错误: ReactNativeWebView不可用');
+      }
+    });
+
+    // 监听来自React Native的消息
+    document.addEventListener('message', function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        addMessage('收到: ' + JSON.stringify(data, null, 2));
+      } catch (e) {
+        addMessage('收到: ' + event.data);
+      }
+    });
+
+    // 对于iOS需要特殊处理
+    window.addEventListener('message', function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        addMessage('收到: ' + JSON.stringify(data, null, 2));
+      } catch (e) {
+        addMessage('收到: ' + event.data);
+      }
+    });
+
+    // 页面加载完成后通知React Native
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'pageLoaded',
+        content: 'WebView页面已加载完成'
+      }));
+    }
+    
+    addMessage('页面初始化完成');
+  </script>
+</body>
+</html>
